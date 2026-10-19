@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>RPG Merchant — Player Account</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap');
+    body{font-family:'Prompt',sans-serif;background:#080d18;color:#e2e8f0}
+    .panel{background:linear-gradient(145deg,rgba(22,33,55,.97),rgba(13,20,36,.97));border:1px solid rgba(148,163,184,.17)}
+    .tab.active{background:#7c3aed;color:white}.tab{color:#94a3b8}.tab:hover{background:#312e81}
+    .field{width:100%;border:1px solid #334155;background:#080d18;border-radius:.8rem;padding:.8rem;color:#f8fafc;outline:none}
+    .field:focus{border-color:#a78bfa;box-shadow:0 0 0 2px #8b5cf633}
+    .btn{transition:.18s}.btn:disabled{opacity:.4;cursor:not-allowed}.game-image{width:88px;height:88px;object-fit:contain;border-radius:1rem;background:rgba(2,6,23,.45);border:1px solid rgba(148,163,184,.18);padding:.35rem}.image-fallback{display:inline-grid;place-items:center;width:88px;height:88px;border-radius:1rem;background:rgba(2,6,23,.45);border:1px solid rgba(148,163,184,.18);font-size:2.5rem;flex-shrink:0}.item-image{width:54px;height:54px;object-fit:contain;border-radius:.75rem;background:rgba(2,6,23,.45);border:1px solid rgba(148,163,184,.18);padding:.25rem}.image-fallback.item-image{font-size:1.7rem}
+  </style>
+</head>
+<body class="min-h-screen">
+  <div id="bootScreen" class="min-h-screen grid place-items-center p-4" role="status" aria-live="polite">
+    <div class="panel rounded-2xl px-8 py-7 text-center shadow-xl">
+      <div class="text-4xl mb-3">⚔️</div>
+      <h1 class="text-xl font-semibold">RPG Merchant</h1>
+      <p id="bootMessage" class="text-sm text-slate-400 mt-2">กำลังตรวจสอบเซสชันผู้เล่น…</p>
+      <div class="mt-4 h-1.5 w-48 rounded-full bg-slate-800 overflow-hidden mx-auto"><div class="h-full w-1/2 rounded-full bg-violet-500 animate-pulse"></div></div>
+    </div>
+  </div>
+  <div id="authScreen" class="hidden min-h-screen grid place-items-center p-4">
+    <div class="panel w-full max-w-md rounded-3xl p-6 sm:p-8 shadow-2xl">
+      <div class="text-center mb-7">
+        <div class="mx-auto w-16 h-16 rounded-2xl bg-violet-500/15 border border-violet-400/30 grid place-items-center text-3xl">⚔️</div>
+        <p class="text-violet-300 text-xs tracking-[.28em] mt-4">ADVENTURER GUILD</p>
+        <h1 class="text-3xl font-bold mt-1">RPG <span class="text-violet-300">Merchant</span></h1>
+        <p class="text-slate-400 text-sm mt-2">เข้าสู่โลกแห่งการผจญภัยและการค้า</p>
+      </div>
+      <div class="grid grid-cols-2 gap-2 p-1 bg-slate-950/70 rounded-xl mb-5">
+        <button id="loginTab" class="tab active rounded-lg p-2.5">เข้าสู่ระบบ</button>
+        <button id="registerTab" class="tab rounded-lg p-2.5">สมัครสมาชิก</button>
+      </div>
+      <form id="authForm" class="space-y-4">
+        <label class="block text-sm text-slate-300">Username
+          <input id="username" class="field mt-1.5" autocomplete="username" minlength="3" maxlength="24" required placeholder="ชื่อผู้เล่น (3–24 ตัวอักษร)">
+        </label>
+        <label class="block text-sm text-slate-300">Password
+          <input id="password" type="password" class="field mt-1.5" autocomplete="current-password" minlength="8" maxlength="128" required placeholder="รหัสผ่านอย่างน้อย 8 ตัวอักษร">
+        </label>
+        <p id="authError" class="hidden text-sm text-rose-300"></p>
+        <button id="authSubmit" class="btn w-full rounded-xl bg-violet-600 hover:bg-violet-500 p-3 font-semibold" type="submit">เข้าสู่ระบบ</button>
+      </form>
+      <p class="text-xs text-slate-500 mt-5 text-center">ข้อมูลบัญชีและเกมจัดเก็บบน Google Sheets ผ่าน GAS</p>
+    </div>
+  </div>
+
+  <div id="gameScreen" class="hidden max-w-7xl mx-auto p-4 md:p-7">
+    <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-7">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-2xl bg-violet-600/20 border border-violet-400/30 grid place-items-center text-2xl">⚔️</div>
+        <div><div class="text-xs tracking-[.25em] text-violet-300">ADVENTURER GUILD</div><h1 class="text-2xl font-bold">RPG Merchant</h1><p class="text-sm text-slate-400">Dungeon · Craft · Trade</p></div>
+      </div>
+      <div class="flex items-center gap-3 flex-wrap">
+        <div class="panel rounded-xl px-4 py-2"><div class="text-xs text-slate-400">ผู้เล่น</div><div id="playerName" class="font-semibold">—</div></div>
+        <div class="panel rounded-xl px-4 py-2"><div class="text-xs text-slate-400">Coins</div><div class="font-semibold text-amber-300"><span id="coins">0</span> ◈</div></div>
+        <button id="logoutBtn" class="btn rounded-xl border border-slate-700 hover:bg-slate-800 px-4 py-3">ออกจากระบบ ↗</button>
+      </div>
+    </header>
+
+    <div class="flex gap-2 overflow-x-auto pb-2 mb-5">
+      <button class="tab active rounded-xl px-4 py-3 whitespace-nowrap" data-tab="dungeon">⚔️ ดันเจี้ยน</button>
+      <button class="tab rounded-xl px-4 py-3 whitespace-nowrap" data-tab="craft">🛠️ คราฟต์</button>
+      <button class="tab rounded-xl px-4 py-3 whitespace-nowrap" data-tab="inventory">🎒 กระเป๋า</button>
+      <button class="tab rounded-xl px-4 py-3 whitespace-nowrap" data-tab="market">🌐 ตลาด</button>
+      <button class="tab rounded-xl px-4 py-3 whitespace-nowrap" data-tab="leaderboard">🏆 Leaderboard</button>
+    </div>
+
+    <section id="page-dungeon" class="page">
+      <div class="grid lg:grid-cols-2 gap-5">
+        <div class="panel rounded-2xl p-5"><p class="text-violet-300 text-sm">DUNGEON</p><h2 class="text-xl font-semibold mb-4">เลือกพื้นที่</h2><div id="playerProgress" class="text-sm text-slate-300 mb-3"></div><div class="grid sm:grid-cols-[1fr_auto] gap-2 mb-3"><input id="dungeonSearch" class="field" placeholder="ค้นหาดันเจี้ยน…" aria-label="ค้นหาดันเจี้ยน"><select id="dungeonFilter" class="field" aria-label="กรองดันเจี้ยน"><option value="all">ทุกพื้นที่</option><option value="available">เข้าได้</option><option value="locked">ยังล็อก</option><option value="cleared">ผ่านแล้ว</option></select></div><p class="text-xs text-slate-500 mb-2">เลือกพื้นที่จากรายการเลื่อนภายในนี้ได้ โดยไม่ต้องเลื่อนทั้งหน้า</p><div id="habitats" class="grid sm:grid-cols-2 gap-3 max-h-[min(60vh,620px)] overflow-y-auto pr-1 content-start"></div><button id="exploreBtn" class="btn mt-4 rounded-xl bg-violet-600 hover:bg-violet-500 px-4 py-3" disabled>🔎 ค้นหามอนสเตอร์</button></div>
+        <div class="panel rounded-2xl p-5"><p class="text-rose-300 text-sm">COMBAT</p><h2 class="text-xl font-semibold mb-4">การต่อสู้</h2><div id="monster" class="rounded-xl bg-slate-950/50 p-6 text-center min-h-48 grid place-items-center text-slate-400">เลือกพื้นที่แล้วออกสำรวจ</div><div id="combatState" class="mt-3 rounded-xl border border-slate-800 bg-slate-950/50 p-3 text-sm text-slate-300">เตรียมตัวก่อนเริ่มต่อสู้</div><div class="mt-2 h-2 rounded-full bg-slate-800 overflow-hidden" aria-label="เวลาตอบสนอง"><div id="timingBar" class="h-full w-0 bg-amber-400 rounded-full"></div></div><div class="grid grid-cols-2 gap-2 mt-3"><button id="attackBtn" class="btn rounded-xl bg-rose-600 hover:bg-rose-500 p-3 font-semibold" disabled>⚔️ โจมตี</button><button id="heavyBtn" class="btn rounded-xl bg-violet-600 hover:bg-violet-500 p-3 font-semibold" disabled>💥 โจมตีหนัก</button><button id="dodgeBtn" class="btn rounded-xl bg-cyan-700 hover:bg-cyan-600 p-3 font-semibold" disabled>↗ หลบ</button><button id="parryBtn" class="btn rounded-xl bg-amber-600 hover:bg-amber-500 p-3 font-semibold" disabled>🛡️ Parry</button></div><div class="text-xs text-slate-500 mt-2">เมื่อขึ้นสัญญาณเตือน คุณมีเวลาประมาณ 2.4 วินาทีในการเลือกหลบ หรือ Parry ในช่วงจังหวะที่ไฮไลต์ การกดรัวไม่ช่วย</div><div id="combatLog" class="text-sm text-slate-400 mt-3"></div></div>
+      </div>
+    </section>
+
+    <section id="page-craft" class="page hidden"><div class="mb-4"><p class="text-emerald-300 text-sm">CRAFTING</p><h2 class="text-2xl font-semibold">โรงคราฟต์</h2><p class="text-sm text-slate-400 mt-1">ค้นหาสูตร กรองสูตรที่คราฟต์ได้ และดูวัตถุดิบที่ยังขาด</p></div><div class="panel rounded-2xl p-4 mb-4 grid sm:grid-cols-3 gap-3"><input id="craftSearch" class="field" placeholder="ค้นหาชื่อไอเทมหรือวัตถุดิบ…" aria-label="ค้นหาสูตรคราฟต์"><select id="craftFilter" class="field" aria-label="กรองสูตร"><option value="all">ทุกสูตร</option><option value="ready">คราฟต์ได้ตอนนี้</option><option value="missing">วัตถุดิบไม่ครบ</option></select><select id="craftStation" class="field" aria-label="กรองสถานี"><option value="all">ทุกสถานี</option></select></div><div id="craftSummary" class="text-sm text-slate-400 mb-3"></div><div id="recipes" class="grid md:grid-cols-2 xl:grid-cols-3 gap-4"></div></section>
+    <section id="page-inventory" class="page hidden"><div class="panel rounded-2xl p-5"><p class="text-amber-300 text-sm">INVENTORY</p><h2 class="text-xl font-semibold mb-4">กระเป๋าของฉัน</h2><div id="inventory" class="space-y-3"></div><h3 class="text-lg font-semibold mt-7 mb-3">ขายคืนระบบ</h3><div id="sellList" class="space-y-3"></div><h3 class="text-lg font-semibold mt-7 mb-3">ฝากขายลงตลาดออนไลน์</h3><form id="listingForm" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3"><label class="text-sm text-slate-400">ไอเทม<select id="listingItem" class="field mt-1" required></select></label><label class="text-sm text-slate-400">จำนวน<input id="listingQty" class="field mt-1" type="number" min="1" value="1" required></label><label class="text-sm text-slate-400">ราคาต่อชิ้น<input id="listingPrice" class="field mt-1" type="number" min="1" value="25" required></label><div class="flex items-end"><button class="btn w-full rounded-xl bg-cyan-600 hover:bg-cyan-500 p-3" type="submit">ฝากขาย</button></div></form></div></section>
+    <section id="page-leaderboard" class="page hidden"><div class="flex flex-wrap items-end justify-between gap-3 mb-4"><div><p class="text-amber-300 text-sm">GUILD RANKINGS</p><h2 class="text-2xl font-semibold">🏆 Leaderboard</h2><p class="text-sm text-slate-400 mt-1">จัดอันดับผู้เล่น 3 หมวดหมู่จากข้อมูลที่บันทึกใน Google Sheets</p></div><button id="refreshLeaderboard" class="btn rounded-xl border border-slate-700 px-4 py-2">รีเฟรชอันดับ</button></div><div class="grid lg:grid-cols-3 gap-4"><div class="panel rounded-2xl p-4"><h3 class="font-semibold mb-3">⚔️ นักล่ามอนสเตอร์ · จำนวน Kills</h3><div id="leaderKills" class="space-y-2 text-sm"></div></div><div class="panel rounded-2xl p-4"><h3 class="font-semibold mb-3">🌟 นักผจญภัย · Level</h3><div id="leaderLevel" class="space-y-2 text-sm"></div></div><div class="panel rounded-2xl p-4"><h3 class="font-semibold mb-3">💰 เศรษฐีแห่งกิลด์ · Coins</h3><div id="leaderCoins" class="space-y-2 text-sm"></div></div></div><p id="leaderboardStatus" class="text-xs text-slate-500 mt-4">อันดับคำนวณจากข้อมูลผู้เล่นที่บันทึกไว้ล่าสุด</p></section>
+    <section id="page-market" class="page hidden"><div class="flex justify-between items-end mb-4 gap-3"><div><p class="text-cyan-300 text-sm">GLOBAL MARKET</p><h2 class="text-2xl font-semibold">ตลาดผู้เล่น</h2><p class="text-sm text-slate-400 mt-1">ค้นหาไอเทมและเรียงตามราคาหรือจำนวน</p></div><button id="refreshMarket" class="btn rounded-xl border border-slate-700 px-4 py-2">รีเฟรช</button></div><div class="panel rounded-2xl p-4 mb-4 grid sm:grid-cols-2 lg:grid-cols-4 gap-3"><input id="marketSearch" class="field" placeholder="ค้นหาชื่อไอเทม / ผู้ขาย…" aria-label="ค้นหาตลาด"><select id="marketSort" class="field" aria-label="เรียงตลาด"><option value="newest">รายการล่าสุด</option><option value="priceAsc">ราคาต่ำ → สูง</option><option value="priceDesc">ราคาสูง → ต่ำ</option><option value="nameAsc">ชื่อ A → Z</option><option value="qtyDesc">จำนวนมาก → น้อย</option></select><input id="marketMinPrice" class="field" type="number" min="0" placeholder="ราคาต่ำสุด" aria-label="ราคาต่ำสุด"><input id="marketMaxPrice" class="field" type="number" min="0" placeholder="ราคาสูงสุด" aria-label="ราคาสูงสุด"></div><div id="marketSummary" class="text-sm text-slate-400 mb-3"></div><div id="market" class="grid md:grid-cols-2 xl:grid-cols-3 gap-4"></div></section>
+
+    <div class="text-xs text-slate-500 mt-8 border-t border-slate-800 pt-4 flex justify-between gap-3"><span id="saveStatus">สถานะ: พร้อมใช้งาน</span><span>เซฟเกมบน Google Sheets</span></div>
+  </div>
+  <div id="toast" class="hidden fixed bottom-5 left-1/2 -translate-x-1/2 max-w-[90vw] bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 shadow-xl text-sm z-50"></div>
+
+<script>
+'use strict';
+// Replace with your deployed Apps Script Web App URL ending in /exec.
+const API_URL = "https://script.google.com/macros/s/AKfycbwW38Yjjef2SE19oIHIvGIVnqkL8Rh1gaoSm3uI5zbl2M5O050ANNZulLVgn4pofaQ1/exec";
+
+// Remember only the player ID locally; never store the password. The server re-loads saved game data on refresh.
+const SESSION_KEY = "rpgMerchantPlayerId";
+const SESSION_NAME_KEY = "rpgMerchantPlayerName";
+let session = null; // {userId, username}
+let game = {coins:0, inventory:{}};
+let master = {items:[], monsters:[], dropRates:[], recipes:[], market:[]};
+let selectedHabitat = "", enemy = null, enemyHP = 0, authMode = "login", busy = false;
+let combat = {phase:"idle", playerHP:100, maxHP:100, stamina:100, level:1, kills:0, cleared:[], telegraphAt:0, turn:0, busy:false, timer:null, heavyCooldown:0};
+const TELEGRAPH_MS = 2400;
+let marketSortMode = "newest";
+const habitatNames = () => [...new Set(master.monsters.map(m=>String(m.Habitat??m.habitat??"ไม่ระบุ")))];
+const habitatIndex = h => habitatNames().indexOf(h);
+const weaponTier = () => Math.max(0,...master.items.filter(x=>/weapon|อาวุธ/i.test(String(x.Category??x.category??"")) && (Number(game.inventory[idOf(x)])||0)>0).map(x=>Number(x.Tier)||1));
+const dungeonRequirement = h => { const i=habitatIndex(h); return {level:1+i*2, weapon:i===0?0:Math.max(1,i), previous:i===0||combat.cleared.includes(habitatNames()[i-1]), cleared:i===0||combat.cleared.includes(habitatNames()[i-1])}; };
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const norm = s => String(s ?? "").trim().toLowerCase();
+const idOf = x => String(x.Item_ID ?? x.itemId ?? x.id ?? "");
+const nameOf = x => String(x.Item_Name ?? x.itemName ?? x.name ?? idOf(x));
+const monsterId = x => String(x.Monster_ID ?? x.monsterId ?? x.id ?? "");
+const monsterName = x => String(x.Monster_Name ?? x.monsterName ?? x.name ?? monsterId(x));
+// Load existing artwork from Image_URL in Items and Monsters. Broken/missing URLs fall back to an icon.
+const imageUrl = x => { const raw=String(x?.Image_URL??x?.image_url??x?.ImageUrl??x?.imageUrl??"").trim(); try { const u=new URL(raw); return ["https:","http:"].includes(u.protocol)?u.href:""; } catch(_){ return ""; } };
+const imageMarkup = (x,alt,fallback="📦",classes="") => { const url=imageUrl(x); return url ? `<img src="${esc(url)}" alt="${esc(alt)}" loading="lazy" decoding="async" class="${esc(classes)}" onerror="this.onerror=null;const f=document.createElement('span');f.className='image-fallback ${esc(classes)}';f.textContent='${fallback}';f.setAttribute('role','img');f.setAttribute('aria-label','${esc(alt)}');this.replaceWith(f);">` : `<span class="image-fallback ${esc(classes)}" role="img" aria-label="${esc(alt)}">${fallback}</span>`; };
+const recipeId = x => String(x.Crafted_Item_ID ?? x.craftedItemId ?? "");
+const recipeName = x => String(x.Crafted_Item_Name ?? x.craftedItemName ?? recipeId(x));
+// Normalize drop rates from Sheets: accepts 25, "25%", or fractional rates like 0.25.
+function chance(value){
+  if(value==null || value==="") return 0;
+  const raw=String(value).trim();
+  const n=Number(raw.replace(/%$/, ""));
+  if(!Number.isFinite(n)) return 0;
+  const pct=raw.endsWith("%")?n:(n>0 && n<1?n*100:n);
+  return Math.max(0,Math.min(100,pct));
+}
+// Parse amount ranges such as "1-3", "1 ~ 3", or a single quantity.
+function amountRange(value){
+  if(value==null || value==="") return [1,1];
+  if(typeof value==="number" && Number.isFinite(value)){const n=Math.max(1,Math.floor(value));return [n,n];}
+  const nums=String(value).match(/\d+/g);
+  if(!nums || !nums.length) return [1,1];
+  const a=Math.max(1,Math.floor(Number(nums[0])));
+  const b=Math.max(a,Math.floor(Number(nums[1]??nums[0])));
+  return [a,b];
+}
+const item = id => master.items.find(x=>idOf(x)===String(id));
+const itemByName = name => master.items.find(x=>norm(nameOf(x))===norm(name)||norm(idOf(x))===norm(name));
+function toast(msg,error=false){const el=$("toast");el.textContent=msg;el.classList.remove("hidden");el.style.borderColor=error?"#fb7185":"#475569";clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.add("hidden"),3200);}
+function setAuthError(msg){$("authError").textContent=msg;$("authError").classList.toggle("hidden",!msg);}
+function setBusy(on){busy=on;$("authSubmit").disabled=on;$("authSubmit").textContent=on?"กำลังดำเนินการ…":(authMode==="login"?"เข้าสู่ระบบ":"สร้างบัญชี");}
+function setMode(mode){authMode=mode;$("loginTab").classList.toggle("active",mode==="login");$("registerTab").classList.toggle("active",mode==="register");$("authSubmit").textContent=mode==="login"?"เข้าสู่ระบบ":"สร้างบัญชี";$("password").autocomplete=mode==="login"?"current-password":"new-password";setAuthError("");}
+$("loginTab").onclick=()=>setMode("login");$("registerTab").onclick=()=>setMode("register");
+
+async function api(action,payload={}){
+  if(!API_URL || API_URL.includes("วาง_URL_GOOGLE_APPS_SCRIPT_ที่นี่")) throw new Error("กรุณาตั้งค่า API_URL เป็น URL ของ GAS Web App ก่อน");
+  const response=await fetch(API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action,...payload})});
+  let result;try{result=await response.json();}catch(_){throw new Error("API ตอบกลับไม่ใช่ JSON ตรวจสอบ URL และการ Deploy GAS");}
+  if(!response.ok || result.success===false || result.ok===false)throw new Error(result.message||("API error "+response.status));
+  return result;
+}
+function parseMaster(result){
+  const root=result.data && !Array.isArray(result.data)?result.data:result;
+  return {
+    items:Array.isArray(root.items)?root.items:[],
+    monsters:Array.isArray(root.monsters)?root.monsters:[],
+    dropRates:Array.isArray(root.dropRates)?root.dropRates:[],
+    recipes:Array.isArray(root.recipes)?root.recipes:[],
+    market:Array.isArray(root.market)?root.market:[]
+  };
+}
+async function loadMaster(){
+  // GET is used for master data/market; login/register/saveGame are POST actions.
+  const response=await fetch(API_URL,{method:"GET",cache:"no-store"});
+  let json;try{json=await response.json();}catch(_){throw new Error("อ่าน Master Data ไม่สำเร็จ");}
+  if(!response.ok||json.success===false)throw new Error(json.message||"อ่าน Master Data ไม่สำเร็จ");
+  master=parseMaster(json);
+}
+function normalizePlayer(result){
+  const player=result.player||result.data?.player||result.data||result;
+  return {
+    userId:String(result.userId??player.userId??player.User_ID??player.user_id??""),
+    username:String(result.username??player.username??player.Username??""),
+    coins:Number(player.coins??player.Coins??250),
+    inventory:parseInventory(player.inventory??player.Inventory),
+    level:Number(player.level??player.Level??1), kills:Number(player.kills??player.Kills??0), cleared:parseInventory(player.cleared??player.Cleared_Dungeons)
+  };
+}
+function parseInventory(value){
+  if(value && typeof value==="object")return value;
+  if(typeof value==="string"){try{const parsed=JSON.parse(value);return parsed&&typeof parsed==="object"?parsed:{};}catch(_){return {};}}
+  return {};
+}
+$("authForm").addEventListener("submit",async e=>{
+  e.preventDefault();if(busy)return;
+  const username=$("username").value.trim(),password=$("password").value;
+  if(!/^[A-Za-z0-9_.-]{3,24}$/.test(username)){setAuthError("Username ต้องยาว 3–24 ตัว และใช้ A-Z, a-z, 0-9, _ . - เท่านั้น");return;}
+  if(password.length<8){setAuthError("Password ต้องมีอย่างน้อย 8 ตัวอักษร");return;}
+  setBusy(true);setAuthError("");
+  try{
+    const result=await api(authMode,{username,password});
+    if(result.success===false)throw new Error(result.message||"ดำเนินการไม่สำเร็จ");
+    const p=normalizePlayer(result);
+    if(!p.userId||!p.username)throw new Error("API ไม่ได้ส่ง userId และ username กลับมา ตรวจสอบโค้ด GAS");
+    session={userId:p.userId,username:p.username};
+    localStorage.setItem(SESSION_KEY, session.userId);
+    localStorage.setItem(SESSION_NAME_KEY, session.username);
+    // Always load the persisted server state after auth, not a client-supplied state.
+    const saved=await api("loadGame",{userId:session.userId});
+    const player=normalizePlayer({...saved,userId:session.userId,username:session.username});
+    game={coins:player.coins,inventory:player.inventory};
+    combat.level=Math.max(1,player.level||1);combat.kills=Math.max(0,player.kills||0);combat.cleared=Array.isArray(player.cleared)?player.cleared:[];combat.playerHP=100;combat.stamina=100;
+    await loadMaster();
+    showGame();
+    renderAll();
+    $("saveStatus").textContent="โหลดข้อมูลผู้เล่นจาก Google Sheets แล้ว";
+    toast(authMode==="register"?"สมัครสมาชิกสำเร็จ":"เข้าสู่ระบบสำเร็จ");
+  }catch(err){session=null;localStorage.removeItem(SESSION_KEY);localStorage.removeItem(SESSION_NAME_KEY);game={coins:0,inventory:{}};setAuthError(err.message||"เชื่อมต่อระบบไม่สำเร็จ");}
+  finally{setBusy(false);}
+});
+async function enterGameForPlayer(userId, username, showToast=false){
+  const saved=await api("resumeSession",{userId});
+  const p=normalizePlayer(saved);
+  if(!p.userId||!p.username)throw new Error("ไม่พบเซสชันผู้เล่น");
+  session={userId:p.userId,username:p.username};localStorage.setItem(SESSION_KEY,session.userId);localStorage.setItem(SESSION_NAME_KEY,session.username);
+  game={coins:p.coins,inventory:p.inventory};combat.level=Math.max(1,p.level||1);combat.kills=Math.max(0,p.kills||0);combat.cleared=Array.isArray(p.cleared)?p.cleared:[];combat.playerHP=100;combat.stamina=100;
+  await loadMaster();showGame();renderAll();await renderLeaderboard();
+  $("saveStatus").textContent="โหลดข้อมูลผู้เล่นจาก Google Sheets แล้ว";
+  if(showToast)toast("เข้าสู่ระบบสำเร็จ");
+}
+async function restoreSession(){
+  const userId=localStorage.getItem(SESSION_KEY);
+  if(!userId){showAuth();return;}
+  $("bootMessage").textContent="กำลังกู้คืนข้อมูลเกมของคุณ…";
+  try{await enterGameForPlayer(userId,localStorage.getItem(SESSION_NAME_KEY)||"",false);}
+  catch(err){
+    // Keep the remembered account when the API is temporarily unavailable or the
+    // deployed GAS version is stale. Do not silently erase the user's session.
+    session=null;showAuth();
+    setAuthError("กู้คืนเซสชันไม่สำเร็จ: "+(err.message||"เชื่อมต่อ API ไม่ได้")+" — ตรวจสอบว่าได้ Deploy GAS เวอร์ชันล่าสุดแล้ว");
+  }
+}
+function showGame(){$("bootScreen").classList.add("hidden");$("authScreen").classList.add("hidden");$("gameScreen").classList.remove("hidden");$("playerName").textContent=session.username;}
+function showAuth(){ $("bootScreen").classList.add("hidden");$("gameScreen").classList.add("hidden");$("authScreen").classList.remove("hidden");$("password").value="";setAuthError("");setMode("login"); }
+$("logoutBtn").onclick=()=>{
+  // Server session tokens are not issued in this simple username/password prototype.
+  // Clear all player data from this page's memory before returning to login.
+  session=null;localStorage.removeItem(SESSION_KEY);localStorage.removeItem(SESSION_NAME_KEY);game={coins:0,inventory:{}};master={items:[],monsters:[],dropRates:[],recipes:[],market:[]};
+  if(combat.timer)clearTimeout(combat.timer);combat={phase:"idle",playerHP:100,maxHP:100,stamina:100,level:1,kills:0,cleared:[],telegraphAt:0,turn:0,busy:false,timer:null,heavyCooldown:0};selectedHabitat="";enemy=null;enemyHP=0;showAuth();
+};
+async function saveGame(){
+  if(!session)throw new Error("ไม่มีผู้เล่นเข้าสู่ระบบ");
+  $("saveStatus").textContent="กำลังบันทึก…";
+  try{
+    const result=await api("saveGame",{userId:session.userId,coins:game.coins,inventory:game.inventory,level:combat.level,kills:combat.kills,cleared:combat.cleared});
+    if(result.success===false)throw new Error(result.message||"บันทึกไม่สำเร็จ");
+    $("saveStatus").textContent="บันทึกลง Google Sheets แล้ว";
+  }catch(err){$("saveStatus").textContent="บันทึกไม่สำเร็จ";toast("เซฟไม่สำเร็จ: "+err.message,true);throw err;}
+}
+async function persistAndRender(){
+  updateHeader();renderInventory();renderCrafting();
+  try{await saveGame();}catch(_){/* Keep UI responsive; tell player save failed. */}
+}
+function updateHeader(){$("coins").textContent=Number(game.coins||0).toLocaleString();$("playerName").textContent=session?.username||"—";}
+function addItem(id,n=1){if(id&&n>0)game.inventory[id]=(Number(game.inventory[id])||0)+n;}
+function takeItem(id,n=1){if((Number(game.inventory[id])||0)<n)return false;game.inventory[id]-=n;if(game.inventory[id]<=0)delete game.inventory[id];return true;}
+function switchTab(tab){document.querySelectorAll(".page").forEach(x=>x.classList.toggle("hidden",x.id!=="page-"+tab));document.querySelectorAll("[data-tab]").forEach(x=>x.classList.toggle("active",x.dataset.tab===tab));if(tab==="market")renderMarket();}
+document.querySelectorAll("[data-tab]").forEach(b=>b.addEventListener("click",()=>switchTab(b.dataset.tab)));
+
+function renderHabitats(){
+  const habitats=habitatNames();
+  $("playerProgress").innerHTML=`<div class="flex flex-wrap gap-3"><span>⭐ Level ${combat.level}</span><span>❤️ HP ${combat.playerHP}/${combat.maxHP}</span><span>⚡ Stamina ${combat.stamina}/100</span><span>🏆 ชนะ ${combat.kills} ครั้ง</span><span>🗡️ อาวุธ Tier ${weaponTier()||"ไม่มี"}</span></div>`;
+  const search=norm($("dungeonSearch")?.value||"");const filter=$("dungeonFilter")?.value||"all";
+  const visible=habitats.map((h,i)=>({h,i,req:dungeonRequirement(h)})).filter(({h,i,req})=>{const unlocked=combat.level>=req.level&&req.previous&&weaponTier()>=req.weapon;const cleared=combat.cleared.includes(h);return (!search||norm(h).includes(search))&&(filter==="all"||(filter==="available"&&unlocked)||(filter==="locked"&&!unlocked)||(filter==="cleared"&&cleared));});
+  $("habitats").innerHTML=visible.map(({h,i,req})=>{const unlocked=combat.level>=req.level&&req.previous&&weaponTier()>=req.weapon;return `<button data-h="${esc(h)}" ${unlocked?"":"disabled"} class="rounded-xl border p-4 text-left ${selectedHabitat===h?"border-violet-400 bg-violet-500/15":"border-slate-700 bg-slate-950/40"} ${unlocked?"":"opacity-45 cursor-not-allowed"}"><div class="flex items-center gap-3">${imageMarkup(master.monsters.find(m=>String(m.Habitat??m.habitat??"ไม่ระบุ")===h)||{},h,["🌲","⛏️","🌋","❄️","🏰"][i%5],"item-image")}<div><div class="font-semibold">${esc(h)} ${combat.cleared.includes(h)?"✓":""}</div></div><div class="text-xs text-slate-400 mt-1">${master.monsters.filter(m=>String(m.Habitat??m.habitat??"ไม่ระบุ")===h).length} ชนิด · แนะนำ Lv.${req.level}</div><div class="text-xs ${unlocked?"text-emerald-300":"text-rose-300"} mt-2">${unlocked?(combat.cleared.includes(h)?"ผ่านแล้ว":"เข้าได้"):!req.previous?"ต้องผ่านพื้นที่ก่อนหน้า":combat.level<req.level?`ต้อง Lv.${req.level}`:`ต้องมีอาวุธ Tier ${req.weapon}`}</div></button>`;}).join("")||'<p class="text-slate-400">ไม่พบพื้นที่ที่ตรงกับตัวกรอง</p>';
+  document.querySelectorAll("[data-h]").forEach(b=>b.onclick=()=>{selectedHabitat=b.dataset.h;enemy=null;clearTimeout(combat.timer);combat.phase="idle";renderHabitats();renderEnemy();$("exploreBtn").disabled=false;$("combatState").textContent="พื้นที่พร้อมแล้ว กดค้นหามอนสเตอร์เพื่อเริ่ม";});
+}
+function setCombatButtons(on){["attackBtn","heavyBtn","dodgeBtn","parryBtn"].forEach(id=>$(id).disabled=!on);}
+function renderEnemy(){
+  const max=enemy?Math.max(1,Number(enemy.HP)||30):1;
+  $("monster").innerHTML=enemy?`<div><div class="flex justify-center mb-3">${imageMarkup(enemy,monsterName(enemy),enemyHP>0?"👾":"💫","game-image")}</div><div class="font-semibold text-lg">${esc(monsterName(enemy))}</div><p class="text-sm text-slate-400 mt-1">Rank ${esc(enemy.Rank??"-")} · ${esc(enemy.Behavior??"นักล่า")}</p><p class="mt-3">HP ${enemyHP} / ${max}</p><div class="mt-2 h-2 bg-slate-800 rounded-full overflow-hidden"><div class="h-full bg-rose-500" style="width:${Math.max(0,enemyHP/max*100)}%"></div></div><p class="text-xs text-slate-400 mt-2">การต่อสู้: ${combat.phase==="telegraph"?"⚠️ กำลังเตรียมโจมตี!":combat.phase==="player"?"ตาคุณ":combat.phase==="dead"?"พ่ายแพ้":"รอคำสั่ง"}</p></div>`:'เลือกพื้นที่แล้วออกสำรวจ';
+  if(!enemy||enemyHP<=0||combat.phase==="idle"||combat.phase==="dead")setCombatButtons(false);else setCombatButtons(true);
+}
+function log(msg){$("combatLog").textContent=msg;}
+function state(msg){$("combatState").textContent=msg;}
+function scheduleEnemy(){
+  if(!enemy||enemyHP<=0||combat.playerHP<=0)return;
+  combat.phase="telegraph";combat.telegraphAt=Date.now();combat.turn++;state("⚠️ "+monsterName(enemy)+" กำลังเตรียมโจมตี! คุณมีเวลา 2.4 วินาที — หลบได้ตลอดช่วง หรือ Parry เมื่อแถบเข้าใกล้จุดกึ่งกลาง");renderEnemy();const bar=$("timingBar");if(bar){bar.style.transition="none";bar.style.width="100%";requestAnimationFrame(()=>{bar.style.transition=`width ${TELEGRAPH_MS}ms linear`;bar.style.width="0%";});}
+  combat.timer=setTimeout(()=>{if(combat.phase!=="telegraph")return;const dmg=Math.max(5,Math.floor((Number(enemy.Attack)||8)+habitatIndex(selectedHabitat)*2));combat.playerHP=Math.max(0,combat.playerHP-dmg);combat.stamina=Math.min(100,combat.stamina+15);combat.phase=combat.playerHP<=0?"dead":"player";state(combat.playerHP<=0?`💀 คุณพ่ายแพ้ เสีย HP ${dmg} · กลับไปพักฟื้นก่อนลองใหม่`:`โดนโจมตี ${dmg} หน่วย · ตอนนี้เป็นตาคุณ`);log(`หลบ/Parry ไม่ทัน เสีย HP ${dmg}`);renderHabitats();renderEnemy();if(combat.playerHP<=0){enemy=null;enemyHP=0;renderEnemy();} },TELEGRAPH_MS);
+}
+function beginPlayerTurn(){combat.phase="player";state("ตาคุณแล้ว เลือกโจมตีปกติ/โจมตีหนัก หรือรออ่านจังหวะรอบถัดไป");renderEnemy();}
+function resolveAttack(kind){if(!enemy||enemyHP<=0||combat.phase!=="player"||combat.busy)return;combat.busy=true;let cost=kind==="heavy"?35:0;if(combat.stamina<cost){combat.busy=false;return toast("Stamina ไม่พอสำหรับโจมตีหนัก",true);}combat.stamina-=cost;let dmg=kind==="heavy"?Math.floor(25+Math.random()*13):Math.floor(11+Math.random()*8);if(kind==="heavy")combat.heavyCooldown=2;enemyHP=Math.max(0,enemyHP-dmg);combat.busy=false;log(`${kind==="heavy"?"โจมตีหนัก":"โจมตีปกติ"} ${dmg} ดาเมจ · มอนสเตอร์เหลือ HP ${enemyHP}`);if(enemyHP<=0){winFight();return;}combat.stamina=Math.min(100,combat.stamina+8);beginPlayerTurn();scheduleEnemy();}
+async function winFight(){
+  clearTimeout(combat.timer);combat.phase="idle";combat.busy=false;
+  combat.kills++;combat.level=1+Math.floor(combat.kills/3);
+  combat.playerHP=Math.min(combat.maxHP,combat.playerHP+12);combat.stamina=100;
+  const defeated=enemy;
+  const drops=master.dropRates.filter(d=>String(d.Monster_ID)===monsterId(defeated));
+  const got=[];
+  drops.forEach(d=>{
+    if(Math.random()*100<chance(d.Drop_Rate)){
+      const [a,b]=amountRange(d.Amount_Range);
+      const n=Math.floor(Math.random()*(b-a+1))+a;
+      addItem(String(d.Item_ID),n);got.push(`${d.Item_Name||d.Item_ID} x${n}`);
+    }
+  });
+  if(combat.kills%3===0&&!combat.cleared.includes(selectedHabitat))combat.cleared.push(selectedHabitat);
+  log("ชัยชนะ! "+(got.join(", ")||"ไม่มีไอเทมดรอป")+` · Level ${combat.level}`);
+  state("ชนะแล้ว! ฟื้น HP บางส่วนและเติม Stamina เลือกสำรวจต่อได้");
+  renderHabitats();renderEnemy();
+  try{await persistAndRender();toast("บันทึกผลการต่อสู้แล้ว");}
+  catch(err){console.error("บันทึกผลต่อสู้ไม่สำเร็จ",err);state("ชนะแล้ว แต่บันทึกไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อ API");toast("ต่อสู้ชนะ แต่บันทึกเกมไม่สำเร็จ",true);}
+}
+$("exploreBtn").onclick=()=>{const req=dungeonRequirement(selectedHabitat);if(combat.level<req.level||!req.previous||weaponTier()<req.weapon)return toast("ดันเจี้ยนนี้ยังไม่ผ่านเงื่อนไข",true);const pool=master.monsters.filter(m=>String(m.Habitat??m.habitat??"ไม่ระบุ")===selectedHabitat);if(!pool.length)return toast("ไม่พบมอนสเตอร์",true);enemy=pool[Math.floor(Math.random()*pool.length)];enemyHP=Math.max(1,Number(enemy.HP)||30);combat.phase="player";combat.stamina=Math.max(0,combat.stamina);renderEnemy();log("พบ "+monsterName(enemy)+" — สังเกตสัญญาณก่อนโจมตี");beginPlayerTurn();};
+$("attackBtn").onclick=()=>resolveAttack("normal");
+$("heavyBtn").onclick=()=>resolveAttack("heavy");
+$("dodgeBtn").onclick=()=>{if(combat.phase!=="telegraph")return toast("ยังไม่มีจังหวะให้หลบ",true);const elapsed=Date.now()-combat.telegraphAt;clearTimeout(combat.timer);if($("timingBar")){ $("timingBar").style.transition="none";$("timingBar").style.width="0%"; }if(elapsed<=TELEGRAPH_MS){combat.playerHP=Math.min(combat.maxHP,combat.playerHP+0);combat.stamina=Math.max(0,combat.stamina-10);combat.phase="player";state("✨ หลบสำเร็จ! ไม่ได้รับความเสียหาย");log("หลบสำเร็จ — ได้ช่องว่างสำหรับโจมตี");renderEnemy();}else{const dmg=Math.max(5,Number(enemy.Attack)||8);combat.playerHP=Math.max(0,combat.playerHP-dmg);combat.phase="player";state(`หลบช้าไป เสีย HP ${dmg}`);renderEnemy();}if(combat.playerHP<=0){enemy=null;enemyHP=0;combat.phase="dead";renderEnemy();}else setTimeout(()=>{if(enemy&&enemyHP>0&&combat.phase==="player")beginPlayerTurn();},450);};
+$("parryBtn").onclick=()=>{if(combat.phase!=="telegraph")return toast("ยังไม่มีจังหวะให้ Parry",true);const elapsed=Date.now()-combat.telegraphAt;clearTimeout(combat.timer);if($("timingBar")){ $("timingBar").style.transition="none";$("timingBar").style.width="0%"; }if(elapsed>=650&&elapsed<=1850){combat.stamina=Math.min(100,combat.stamina+20);combat.phase="player";const counter=Math.floor(10+Math.random()*9);enemyHP=Math.max(0,enemyHP-counter);state(`🛡️ Parry สมบูรณ์! สวนกลับ ${counter} ดาเมจ`);log(`Parry สำเร็จ สวนกลับ ${counter} ดาเมจ`);renderEnemy();if(enemyHP<=0){winFight();return;}}else{const dmg=Math.max(5,Number(enemy.Attack)||8);combat.playerHP=Math.max(0,combat.playerHP-dmg);combat.phase="player";state(`Parry ไม่ตรงจังหวะ เสีย HP ${dmg}`);log("Parry เร็วหรือช้าเกินไป");renderEnemy();}if(combat.playerHP<=0){enemy=null;enemyHP=0;combat.phase="dead";renderEnemy();}else setTimeout(()=>{if(enemy&&enemyHP>0&&combat.phase==="player")beginPlayerTurn();},450);};
+function ingredients(recipe){
+  const raw=recipe.Required_Ingredients??"";
+  if(Array.isArray(raw))return raw.map(x=>({name:x.Item_Name??x.name,id:x.Item_ID??x.id,qty:Number(x.Quantity??x.quantity??1)}));
+  if(raw&&typeof raw==="object")return Object.entries(raw).map(([name,qty])=>({name,id:"",qty:Number(qty)||1}));
+  return String(raw).split(/[,;\n]+/).map(s=>{const m=s.trim().match(/^(.*?)\s*[x×*]\s*(\d+)\s*$/i);return s.trim()?{name:m?m[1].trim():s.trim(),id:"",qty:m?Number(m[2]):1}:null;}).filter(Boolean).map(x=>({...x,id:x.id||idOf(itemByName(x.name)||{})}));
+}
+function canCraft(r){const req=ingredients(r);return req.length>0&&req.every(x=>x.id&&(Number(game.inventory[x.id])||0)>=x.qty);}
+function renderCrafting(){
+  const search=norm($("craftSearch")?.value||"");const filter=$("craftFilter")?.value||"all";const station=$("craftStation")?.value||"all";
+  const stations=[...new Set(master.recipes.map(r=>String(r.Crafting_Station??"สถานีคราฟต์")).filter(Boolean))];
+  const stationSelect=$("craftStation");if(stationSelect){const current=stationSelect.value||"all";stationSelect.innerHTML='<option value="all">ทุกสถานี</option>'+stations.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join("");if(stations.includes(current))stationSelect.value=current;}
+  const recipes=master.recipes.map((r,i)=>({r,i,req:ingredients(r),ready:canCraft(r)})).filter(({r,req,ready})=>{const text=norm([recipeName(r),r.Crafting_Station??"",...req.map(x=>x.name)].join(" "));return (!search||text.includes(search))&&(filter==="all"||(filter==="ready"&&ready)||(filter==="missing"&&!ready))&&(station==="all"||String(r.Crafting_Station??"สถานีคราฟต์")===station);});
+  $("craftSummary").textContent=`แสดง ${recipes.length} จาก ${master.recipes.length} สูตร · คราฟต์ได้ ${recipes.filter(x=>x.ready).length} สูตร`;
+  $("recipes").innerHTML=recipes.map(({r,i,req,ready})=>`<article class="panel rounded-2xl p-5"><div class="flex items-start justify-between gap-2"><div><div class="flex items-center gap-3">${imageMarkup(item(recipeId(r))||{},recipeName(r),"🛠️","item-image")}<div><h3 class="font-semibold text-lg">${esc(recipeName(r))}</h3><p class="text-xs text-slate-400">${esc(r.Crafting_Station??"สถานีคราฟต์")}</p></div></div><span class="text-xs rounded-full px-2 py-1 ${ready?"bg-emerald-500/15 text-emerald-300":"bg-slate-800 text-slate-400"}">${ready?"พร้อมคราฟต์":"วัตถุดิบไม่ครบ"}</span></div><div class="my-4 space-y-2">${req.map(x=>`<div class="flex justify-between gap-3 text-sm"><span>${esc(x.name)}</span><span class="whitespace-nowrap ${((game.inventory[x.id]||0)>=x.qty)?"text-emerald-300":"text-rose-300"}">${game.inventory[x.id]||0} / ${x.qty}</span></div>`).join("")}</div><button data-craft="${i}" class="btn w-full rounded-xl p-3 ${ready?"bg-emerald-600 hover:bg-emerald-500":"bg-slate-800"}" ${ready?"":"disabled"}>คราฟต์ไอเทม</button></article>`).join("")||'<div class="panel rounded-2xl p-8 text-center text-slate-400">ไม่พบสูตรที่ตรงกับตัวกรอง ลองเปลี่ยนคำค้นหาหรือเลือก “ทุกสูตร”</div>';
+  document.querySelectorAll("[data-craft]").forEach(b=>b.onclick=async()=>{const r=master.recipes.find((x)=>master.recipes.indexOf(x)===Number(b.dataset.craft)),req=ingredients(r);if(!canCraft(r))return toast("วัตถุดิบไม่พอ",true);req.forEach(x=>takeItem(x.id,x.qty));addItem(recipeId(r),1);await persistAndRender();toast("คราฟต์สำเร็จ");});
+}
+
+function tierPrice(x){const t=String(x?.Tier??"1").replace(/tier\s*/i,"");return ({1:10,2:50,3:150})[t]||10;}
+function renderInventory(){
+  const entries=Object.entries(game.inventory).filter(([,n])=>Number(n)>0);
+  $("inventory").innerHTML=entries.map(([id,n])=>{const x=item(id)||{Item_ID:id,Item_Name:id,Tier:1};return `<div class="flex justify-between items-center gap-3 rounded-xl bg-slate-950/40 border border-slate-800 p-3">${imageMarkup(x,nameOf(x),"📦","item-image")}<div class="flex-1"><div class="font-medium">${esc(nameOf(x))}</div><div class="text-xs text-slate-400">Tier ${esc(x.Tier??1)}</div></div><span class="text-violet-300 font-semibold">x${n}</span></div>`;}).join("")||'<p class="text-slate-500">กระเป๋ายังว่าง</p>';
+  $("sellList").innerHTML=entries.map(([id,n])=>{const x=item(id)||{Item_ID:id,Item_Name:id,Tier:1};return `<div class="flex items-center gap-3 rounded-xl bg-slate-950/40 border border-slate-800 p-3">${imageMarkup(x,nameOf(x),"📦","item-image")}<div class="flex-1">${esc(nameOf(x))}<div class="text-xs text-slate-400">${tierPrice(x)} Coins/ชิ้น · มี ${n}</div></div><input id="sell-${esc(id)}" class="field" style="width:72px;padding:.5rem" type="number" min="1" max="${n}" value="1"><button data-sell="${esc(id)}" class="rounded-lg bg-amber-600 px-3 py-2">ขาย</button></div>`;}).join("")||'<p class="text-slate-500">ไม่มีไอเทมให้ขาย</p>';
+  $("listingItem").innerHTML=entries.map(([id,n])=>`<option value="${esc(id)}">${esc(nameOf(item(id)||{Item_ID:id}))} (มี ${n})</option>`).join("")||'<option value="">ไม่มีไอเทม</option>';
+  $("listingQty").max=entries.length?Math.max(...entries.map(([,n])=>n)):1;
+  document.querySelectorAll("[data-sell]").forEach(b=>b.onclick=async()=>{const id=b.dataset.sell,n=Math.floor(Number($("sell-"+id).value)),have=Number(game.inventory[id])||0;if(n<1||n>have)return toast("จำนวนไม่ถูกต้อง",true);game.coins+=tierPrice(item(id))*n;takeItem(id,n);updateHeader();await persistAndRender();toast("ขายสำเร็จ");});
+}
+$("listingForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const itemIdValue=$("listingItem").value, qty=Math.floor(Number($("listingQty").value)), price=Math.floor(Number($("listingPrice").value));
+  if(!itemIdValue||qty<1||price<1||(Number(game.inventory[itemIdValue])||0)<qty)return toast("ตรวจสอบไอเทม จำนวน และราคา",true);
+  try{
+    const response=await api("postMarket",{userId:session.userId,Item_ID:itemIdValue,Quantity:qty,Price:price});
+    // GAS deducts inventory and creates the listing atomically on the server.
+    const saved=await api("loadGame",{userId:session.userId});
+    const player=normalizePlayer({...saved,userId:session.userId,username:session.username});
+    game={coins:player.coins,inventory:player.inventory};
+    combat.level=Math.max(1,player.level||1);combat.kills=Math.max(0,player.kills||0);combat.cleared=Array.isArray(player.cleared)?player.cleared:[];combat.playerHP=100;combat.stamina=100;
+    await loadMaster();renderAll();toast("ลงประกาศขายสำเร็จ");
+  }catch(err){toast("ลงประกาศไม่สำเร็จ: "+err.message,true);}
+});
+function marketFields(x){return {id:String(x.Listing_ID??x.id??""),itemId:String(x.Item_ID??""),name:String(x.Item_Name??""),qty:Number(x.Quantity??1),price:Number(x.Price??0),status:String(x.Status??""),seller:String(x.Seller??"ผู้เล่น"),sellerId:String(x.Seller_ID??"")};}
+function renderMarket(){
+  const search=norm($("marketSearch")?.value||"");const minRaw=$("marketMinPrice")?.value;const maxRaw=$("marketMaxPrice")?.value;const min=minRaw===""||minRaw==null?0:Number(minRaw);const max=maxRaw===""||maxRaw==null?Infinity:Number(maxRaw);
+  let active=master.market.filter(x=>norm(x.Status)==="active").map((raw,index)=>({...marketFields(raw),raw,index})).filter(x=>(!search||norm(`${x.name} ${x.itemId} ${x.seller}`).includes(search))&&x.price>=min&&x.price<=max);
+  const sort=$("marketSort")?.value||marketSortMode;marketSortMode=sort;
+  if(sort==="priceAsc")active.sort((a,b)=>a.price-b.price);else if(sort==="priceDesc")active.sort((a,b)=>b.price-a.price);else if(sort==="nameAsc")active.sort((a,b)=>a.name.localeCompare(b.name,"th"));else if(sort==="qtyDesc")active.sort((a,b)=>b.qty-a.qty);
+  $("marketSummary").textContent=`พบ ${active.length} รายการจาก ${master.market.filter(x=>norm(x.Status)==="active").length} รายการ · Coins ของคุณ ${Number(game.coins||0).toLocaleString()}`;
+  $("market").innerHTML=active.map((x,i)=>{const own=(x.sellerId&&x.sellerId===session?.userId)||(!x.sellerId&&norm(x.seller)===norm(session?.username||""));return `<article class="panel rounded-2xl p-5"><div class="flex items-center gap-3">${imageMarkup(item(x.itemId)||{},x.name||x.itemId,"📦","game-image")}<div><h3 class="font-semibold text-lg">${esc(x.name||x.itemId)}</h3><p class="text-sm text-slate-400 mt-1">ผู้ขาย ${esc(x.seller)} · จำนวน ${x.qty}</p></div></div><div class="flex justify-between items-end gap-3 mt-5"><div><b class="text-amber-300 text-xl">${x.price.toLocaleString()} ◈</b><p class="text-xs text-slate-500">รวม ${((x.price||0)*(x.qty||1)).toLocaleString()} Coins</p></div>${own?'<span class="rounded-xl border border-slate-600 text-slate-400 px-4 py-2">สินค้าของคุณ</span>':`<button data-buy="${i}" class="rounded-xl bg-cyan-600 hover:bg-cyan-500 px-4 py-2">ซื้อไอเทม</button>`}</div></article>`;}).join("")||'<div class="panel rounded-2xl p-8 text-center text-slate-400">ไม่พบรายการที่ตรงกับตัวกรอง ลองล้างคำค้นหาหรือช่วงราคา</div>';
+  document.querySelectorAll("[data-buy]").forEach(b=>b.onclick=async()=>{const x=active[Number(b.dataset.buy)],total=x.qty*x.price;if((x.sellerId&&x.sellerId===session?.userId)||(!x.sellerId&&norm(x.seller)===norm(session?.username||"")))return toast("ไม่สามารถซื้อรายการที่ตัวเองลงขายได้",true);if(!x.id)return toast("Listing_ID หายไป",true);if(game.coins<total)return toast("Coins ไม่เพียงพอ",true);if(!confirm(`ซื้อ ${x.name} x${x.qty} ในราคา ${total} Coins?`))return;try{await api("buyMarket",{userId:session.userId,Listing_ID:x.id,Item_ID:x.itemId,Quantity:x.qty,Price:x.price});game.coins-=total;addItem(x.itemId,x.qty);await saveGame();await loadMaster();renderAll();toast("ซื้อไอเทมสำเร็จ");}catch(e){toast("ซื้อไม่สำเร็จ: "+e.message,true);}});
+}
+
+$("refreshMarket").onclick=async()=>{try{await loadMaster();renderMarket();toast("รีเฟรชตลาดแล้ว");}catch(e){toast(e.message,true);}};
+["dungeonSearch","dungeonFilter"].forEach(id=>$(id)?.addEventListener("input",renderHabitats));
+["craftSearch","craftFilter","craftStation"].forEach(id=>$(id)?.addEventListener("input",renderCrafting));
+["marketSearch","marketSort","marketMinPrice","marketMaxPrice"].forEach(id=>$(id)?.addEventListener("input",renderMarket));
+async function renderLeaderboard(){
+  try{
+    const data=await api("leaderboard");const rows=Array.isArray(data.players)?data.players:[];
+    const draw=(id,key,suffix="")=>{$(id).innerHTML=[...rows].sort((a,b)=>(Number(b[key])||0)-(Number(a[key])||0)).slice(0,10).map((x,i)=>`<div class="flex items-center justify-between gap-2 rounded-lg bg-slate-950/40 px-3 py-2"><span class="truncate"><b class="text-amber-300 mr-2">#${i+1}</b>${esc(x.username)}</span><b class="whitespace-nowrap">${(Number(x[key])||0).toLocaleString()}${suffix}</b></div>`).join("")||'<p class="text-slate-500">ยังไม่มีข้อมูลผู้เล่น</p>';};
+    draw("leaderKills","kills");draw("leaderLevel","level");draw("leaderCoins","coins");$("leaderboardStatus").textContent=`มีผู้เล่นในอันดับ ${rows.length} คน · อัปเดตเมื่อรีเฟรช`;
+  }catch(e){$("leaderboardStatus").textContent="โหลดอันดับไม่สำเร็จ: "+e.message;}
+}
+$("refreshLeaderboard").onclick=renderLeaderboard;
+function renderAll(){updateHeader();renderHabitats();renderEnemy();renderCrafting();renderInventory();renderMarket();}
+restoreSession();
+</script>
+</body>
+</html>
